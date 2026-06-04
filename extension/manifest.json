@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Dual Captions for Disney+",
+  "description": "Minimal Disney+ dual-caption MVP.",
+  "version": "0.1.21",
+  "permissions": [
+    "storage",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "https://disneyplus.com/*",
+    "https://www.disneyplus.com/*",
+    "https://*.disneyplus.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/page-translation-bridge.js"
+      ],
+      "matches": [
+        "https://disneyplus.com/*",
+        "https://www.disneyplus.com/*"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://disneyplus.com/*",
+        "https://www.disneyplus.com/*"
+      ],
+      "js": [
+        "src/page-translation-bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://disneyplus.com/*",
+        "https://www.disneyplus.com/*"
+      ],
+      "js": [
+        "src/disneyplus/parser.js",
+        "src/disneyplus/captionStore.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

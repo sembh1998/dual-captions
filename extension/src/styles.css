@@ -1,0 +1,176 @@
+#dc-disney-root {
+  color-scheme: dark;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#dc-disney-caption {
+  position: fixed;
+  left: 50%;
+  bottom: 14vh;
+  z-index: 2147483647;
+  max-width: min(94vw, 1180px);
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+  padding: 0.28em 0.5em;
+  border-radius: 0.22em;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: clamp(22px, 3.4vw, 44px);
+  font-weight: 700;
+  line-height: 1.18;
+  text-align: center;
+  text-shadow: 0 2px 7px rgba(0, 0, 0, 0.95);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  cursor: grab;
+  pointer-events: auto;
+  user-select: none;
+  display: grid;
+  gap: 0.18em;
+}
+
+#dc-disney-caption.dc-disney-caption-dragging {
+  cursor: grabbing;
+}
+
+#dc-disney-caption-first,
+#dc-disney-caption-second {
+  min-height: 1.18em;
+  max-width: 100%;
+}
+
+#dc-disney-caption-second {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.82em;
+}
+
+#dc-disney-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483647;
+  display: grid;
+  gap: 8px;
+  width: 230px;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(9, 14, 28, 0.88);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 13px;
+}
+
+#dc-disney-panel label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+#dc-disney-panel select,
+#dc-disney-panel input[type='range'],
+#dc-disney-panel input[type='number'],
+#dc-disney-panel input[type='color'] {
+  min-width: 0;
+  width: 100%;
+}
+
+#dc-disney-panel select {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  padding: 6px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-disney-style-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.dc-disney-style-grid span {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+}
+
+.dc-disney-style-grid input[type='number'] {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  padding: 5px 7px;
+}
+
+.dc-disney-style-grid input[type='color'] {
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 0;
+}
+
+.dc-disney-sync-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.dc-disney-sync-row input,
+.dc-disney-sync-row button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  padding: 6px 8px;
+  min-width: 0;
+}
+
+.dc-disney-sync-row button {
+  cursor: pointer;
+}
+
+#dc-disney-status,
+#dc-disney-bridge-status,
+#dc-disney-source-status {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  line-height: 1.35;
+  max-height: 3.9em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+#dc-disney-bridge-status {
+  color: rgba(160, 210, 255, 0.82);
+}
+
+#dc-disney-source-status {
+  color: rgba(190, 255, 190, 0.78);
+}
+
+#dc-disney-version {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 11px;
+  text-align: right;
+}
+
+@media (max-width: 680px) {
+  #dc-disney-panel {
+    right: 10px;
+    bottom: 10px;
+    width: 200px;
+  }
+
+  #dc-disney-caption {
+    bottom: 18vh;
+    max-width: 96vw;
+  }
+}
