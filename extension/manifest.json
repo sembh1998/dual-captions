@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Dual Captions for Disney+",
-  "description": "Minimal Disney+ dual-caption MVP.",
-  "version": "0.1.24",
+  "name": "Dual Captions for Streaming",
+  "description": "Minimal dual-caption MVP for Disney+ and Netflix.",
+  "version": "0.1.31",
   "permissions": [
     "storage",
     "webRequest"
@@ -11,7 +11,8 @@
     "https://*/*",
     "https://disneyplus.com/*",
     "https://www.disneyplus.com/*",
-    "https://*.disneyplus.com/*"
+    "https://*.disneyplus.com/*",
+    "https://www.netflix.com/*"
   ],
   "background": {
     "service_worker": "src/background.js"
@@ -23,7 +24,8 @@
       ],
       "matches": [
         "https://disneyplus.com/*",
-        "https://www.disneyplus.com/*"
+        "https://www.disneyplus.com/*",
+        "https://www.netflix.com/*"
       ]
     }
   ],
@@ -31,7 +33,8 @@
     {
       "matches": [
         "https://disneyplus.com/*",
-        "https://www.disneyplus.com/*"
+        "https://www.disneyplus.com/*",
+        "https://www.netflix.com/*"
       ],
       "js": [
         "src/page-translation-bridge.js"
@@ -42,7 +45,8 @@
     {
       "matches": [
         "https://disneyplus.com/*",
-        "https://www.disneyplus.com/*"
+        "https://www.disneyplus.com/*",
+        "https://www.netflix.com/*"
       ],
       "js": [
         "src/disneyplus/parser.js",

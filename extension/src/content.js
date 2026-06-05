@@ -1,5 +1,5 @@
 (function () {
-  const EXTENSION_VERSION = '0.1.24';
+  const EXTENSION_VERSION = '0.1.31';
   const SETTINGS_KEY = 'dcDisneySettings';
   const DEFAULT_SETTINGS = {
     enabled: true,
@@ -33,6 +33,8 @@
   };
   let userSelectedSourceLanguage = false;
   let lastRenderStatusAt = 0;
+  let lastReadableNetflixCaptionAt = 0;
+  let lastReadableNetflixCaptionText = '';
   let translationRequestId = 0;
   let translationBridgeReady = false;
   let wasInPlayback = false;
@@ -42,6 +44,16 @@
   let isActive = true;
   let animationFrameId = null;
   const intervalIds = [];
+
+  const getCurrentSite = () => {
+    if (location.hostname.includes('netflix.com')) return 'netflix';
+    if (location.hostname.includes('disneyplus.com')) return 'disneyplus';
+    return 'unknown';
+  };
+
+  const getSiteLabel = () => (getCurrentSite() === 'netflix' ? 'Netflix' : 'Disney+');
+
+  const getInitialStatus = () => `Waiting for ${getSiteLabel()} captions...`;
 
   const existingRoot = document.getElementById('dc-disney-root');
   if (existingRoot) existingRoot.remove();
@@ -56,6 +68,7 @@
 
   const stopContentScript = () => {
     isActive = false;
+    document.documentElement.classList.remove('dc-hide-netflix-native-captions');
     intervalIds.forEach(intervalId => window.clearInterval(intervalId));
     if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
   };
@@ -125,7 +138,7 @@
         <div id="dc-disney-bridge-status">Bridge: checking...</div>
         <div id="dc-disney-source-status">Source: waiting...</div>
       </div>
-      <div id="dc-disney-status">Waiting for Disney+ captions...</div>
+      <div id="dc-disney-status">${getInitialStatus()}</div>
       <div id="dc-disney-version">v${EXTENSION_VERSION}</div>
     </div>
   `;
@@ -278,10 +291,31 @@
     return '';
   };
 
+  const normalizeCaptionTextForComparison = text => String(text || '')
+    .toLowerCase()
+    .replace(/[\s\p{P}\p{S}]+/gu, '');
+
+  const collapseRepeatedCaptionLine = line => {
+    const trimmedLine = String(line || '').trim();
+    const repeatedPhrase = trimmedLine.match(/^(.{2,120}?)([.!?。！？])?\s+\1\2?$/iu);
+    return repeatedPhrase ? `${repeatedPhrase[1]}${repeatedPhrase[2] || ''}`.trim() : trimmedLine;
+  };
+
+  const dedupeCaptionLines = lines => {
+    const seen = new Set();
+    return lines.filter(line => {
+      const comparisonKey = normalizeCaptionTextForComparison(line);
+      if (!comparisonKey || seen.has(comparisonKey)) return false;
+
+      seen.add(comparisonKey);
+      return true;
+    });
+  };
+
   const cleanSubtitleForTranslation = text => {
     if (!text) return '';
 
-    return text
+    const lines = text
       .split('\n')
       .map(line => line.trim())
       .filter(line => line && !/^\[[^\]]+\]$/.test(line))
@@ -292,8 +326,10 @@
         .replace(/\([^)]{1,80}\)/g, '')
         .replace(/^[-–—]?\s*[A-Z][A-Z\s]{1,24}:\s*/, '')
         .trim())
-      .filter(Boolean)
-      .join('\n');
+      .map(collapseRepeatedCaptionLine)
+      .filter(Boolean);
+
+    return dedupeCaptionLines(lines).join('\n');
   };
 
   const parseTimeString = value => {
@@ -349,6 +385,7 @@
   const renderLanguageOptions = () => {
     settings = normalizeSettings(settings);
     const languages = store.getLanguages().filter(language => typeof language === 'string' && language);
+    if (getCurrentSite() === 'netflix' && !languages.includes('en')) languages.unshift('en');
     const previousValue = settings.selectedLanguage || '';
     const preferredSourceLanguage = languages.find(language => languagesMatch(language, 'en'));
     languageSelect.innerHTML = '';
@@ -593,6 +630,7 @@
   };
 
   const isPlaybackRoute = () => {
+    if (getCurrentSite() === 'netflix') return /\/watch\//.test(window.location.pathname);
     return /\/play\/|\/video\//.test(window.location.pathname);
   };
 
@@ -605,7 +643,55 @@
     return isPlaybackRoute() || isLargeVideo || !!(video.duration && video.duration > 60);
   };
 
+  const applyNativeCaptionVisibility = playbackActive => {
+    document.documentElement.classList.toggle(
+      'dc-hide-netflix-native-captions',
+      getCurrentSite() === 'netflix' && playbackActive && settings.enabled
+    );
+  };
+
+  const isVisibleCaptionElement = element => {
+    const rect = element.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
+    const marker = `${element.className || ''} ${element.id || ''} ${element.getAttribute('data-uia') || ''}`.toLowerCase();
+
+    return rect.width > 8
+      && rect.height > 6
+      && rect.top > window.innerHeight * 0.35
+      && rect.bottom <= window.innerHeight
+      && style.visibility !== 'hidden'
+      && style.display !== 'none'
+      && Number(style.opacity || 1) > 0
+      && !element.closest('button, [role="button"], [role="menu"], [role="dialog"], [data-uia*="selector"], [data-uia*="menu"]')
+      && !marker.includes('button')
+      && !marker.includes('menu')
+      && !marker.includes('selector');
+  };
+
   const getVisibleNativeCaptionText = () => {
+    if (getCurrentSite() === 'netflix') {
+      const netflixSelectors = [
+        '.player-timedtext span',
+        '.player-timedtext-text-container span',
+        '.player-timedtext-text-container',
+        '.player-timedtext'
+      ];
+
+      for (const selector of netflixSelectors) {
+        const lines = Array.from(document.querySelectorAll(selector))
+          .filter(element => !root.contains(element))
+          .filter(isVisibleCaptionElement)
+          .map(element => (element.innerText || element.textContent || '').trim())
+          .map(collapseRepeatedCaptionLine)
+          .filter(Boolean);
+        const text = dedupeCaptionLines(lines).join('\n').trim();
+
+        if (text) return text;
+      }
+
+      return '';
+    }
+
     const candidates = Array.from(document.querySelectorAll('div, span, p'));
     const viewportHeight = window.innerHeight;
 
@@ -708,8 +794,10 @@
     if (!isActive) return;
 
     const playbackActive = isPlaybackActive();
+
     if (!playbackActive) {
       wasInPlayback = false;
+      applyNativeCaptionVisibility(false);
       panelEl.hidden = true;
       bubbleEl.hidden = true;
       captionEl.hidden = true;
@@ -719,15 +807,25 @@
 
     if (!wasInPlayback) {
       wasInPlayback = true;
-      setStatus('Disney+ playback detected. Waiting for captions...');
+      if (!settings.selectedLanguage && getCurrentSite() === 'netflix') {
+        settings.selectedLanguage = 'en';
+        languageSelect.value = 'en';
+        saveSettings();
+      }
+      renderLanguageOptions();
+      setStatus(getCurrentSite() === 'netflix'
+        ? 'Netflix playback detected. Enable Netflix English subtitles for translation.'
+        : `${getSiteLabel()} playback detected. Waiting for captions...`);
       requestPendingSegments();
       harvestTextTracks();
     }
 
+    const now = Date.now();
+    const currentSite = getCurrentSite();
     const video = getVideo();
     const shouldRender = settings.enabled && settings.selectedLanguage && video;
     const visibleNativeText = shouldRender ? cleanSubtitleForTranslation(getVisibleNativeCaptionText()) : '';
-    const displayedTime = shouldRender ? getDisplayedPlaybackTime() : null;
+    const displayedTime = shouldRender && currentSite !== 'netflix' ? getDisplayedPlaybackTime() : null;
     const mediaTime = video ? video.currentTime : 0;
     const currentTime = settings.syncOffsetSeconds
       ? mediaTime + settings.syncOffsetSeconds
@@ -742,7 +840,19 @@
     const rawSourceText = shouldRender
       ? visibleNativeText || (activeSourceCue && activeSourceCue.text) || store.getCaptionAt(settings.selectedLanguage, lookupTime)
       : '';
-    const sourceText = cleanSubtitleForTranslation(rawSourceText);
+    let sourceText = cleanSubtitleForTranslation(rawSourceText);
+
+    if (currentSite === 'netflix') {
+      if (sourceText) {
+        lastReadableNetflixCaptionAt = now;
+        lastReadableNetflixCaptionText = sourceText;
+      } else if (now - lastReadableNetflixCaptionAt < 3000) {
+        sourceText = lastReadableNetflixCaptionText;
+      }
+    }
+
+    applyNativeCaptionVisibility(playbackActive && (currentSite !== 'netflix' || now - lastReadableNetflixCaptionAt < 5000));
+
     const firstText = getCaptionForTarget(settings.selectedLanguage, settings.firstTargetLanguage, sourceText, lookupTime, !!activeSourceCue);
     const secondText = getCaptionForTarget(settings.selectedLanguage, settings.secondTargetLanguage, sourceText, lookupTime, !!activeSourceCue);
 
@@ -756,9 +866,23 @@
     captionEl.hidden = !firstText && !secondText;
     applyCollapsedState();
 
-    if (!sourceText && shouldRender && Date.now() - lastRenderStatusAt > 5000) {
-      lastRenderStatusAt = Date.now();
-      setStatus(`No active ${settings.selectedLanguage} caption at ${Math.floor(currentTime)}s. Loaded ${store.getCount(settings.selectedLanguage)} cues.`);
+    if (!sourceText && shouldRender && now - lastRenderStatusAt > 5000) {
+      if (currentSite === 'netflix') {
+        if (now - lastReadableNetflixCaptionAt < 25000) {
+          animationFrameId = window.requestAnimationFrame(renderCaption);
+          return;
+        }
+
+        lastRenderStatusAt = now;
+        const hasImageCaptionLayer = !!document.querySelector('.image-based-timed-text');
+        setSourceStatus(`Source ${settings.selectedLanguage}: enable Netflix English subtitles.`);
+        setStatus(hasImageCaptionLayer
+          ? 'Netflix subtitles are image-based here; choose a text/native English subtitle track if available.'
+          : 'Enable Netflix English subtitles for translation. Set Netflix subtitles to None only after a network parser exists.');
+      } else {
+        lastRenderStatusAt = now;
+        setStatus(`No active ${settings.selectedLanguage} caption at ${Math.floor(currentTime)}s. Loaded ${store.getCount(settings.selectedLanguage)} cues.`);
+      }
     }
 
     animationFrameId = window.requestAnimationFrame(renderCaption);
@@ -767,15 +891,18 @@
   const resetForRouteChange = () => {
     if (window.location.href === lastUrl) return;
     lastUrl = window.location.href;
+    applyNativeCaptionVisibility(false);
     store.clear();
     harvestedTextTrackKeys.clear();
+    lastReadableNetflixCaptionAt = 0;
+    lastReadableNetflixCaptionText = '';
     wasInPlayback = false;
     settings.selectedLanguage = '';
     saveSettings();
     renderLanguageOptions();
     firstCaptionEl.textContent = '';
     secondCaptionEl.textContent = '';
-    setStatus('Waiting for Disney+ captions...');
+    setStatus(getInitialStatus());
     if (isPlaybackActive()) requestPendingSegments();
   };
 

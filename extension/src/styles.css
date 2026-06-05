@@ -7,6 +7,16 @@
   display: none !important;
 }
 
+html.dc-hide-netflix-native-captions .player-timedtext,
+html.dc-hide-netflix-native-captions .player-timedtext *,
+html.dc-hide-netflix-native-captions .player-timedtext-text-container,
+html.dc-hide-netflix-native-captions .player-timedtext-text-container * {
+  color: transparent !important;
+  background: transparent !important;
+  text-shadow: none !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
 #dc-disney-caption {
   position: fixed;
   left: 50%;
