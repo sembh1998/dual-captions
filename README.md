@@ -1,78 +1,68 @@
-## This project is now archived (12/1/22)
+# Dual Captions for Streaming
 
-When I created this project, it was just for myself to learn French on YouTube. I never imagined it would reach over 30,000 installs and over 200 stars. Thank you for your support over the years. 
+This fork is a new no-build Manifest V3 Chrome extension for dual translated captions on Disney+ and Netflix.
 
-I cannot commit to maintaining this project going forward due to other priorities in my personal life. Thank you for understanding. The code will be kept up so that others can create and maintain forks if they choose to.
+It is not the original archived YouTube/Netflix/Disney+/Kanopy extension workflow. The actively developed extension lives in `extension/` and is loaded directly as an unpacked Chrome extension.
 
--- Mike
+## What Works
 
-## dual-captions <br/> Subtitles in two languages for YouTube, Netflix, Disney+ & Kanopy
-![build](https://travis-ci.com/mikesteele/dual-captions.svg?branch=master)
+- Disney+ WebVTT subtitle capture from network requests.
+- Disney+ manual subtitle sync for ad-supported playback timelines.
+- Netflix translation from the visible native subtitle text.
+- German and Brazilian Portuguese translated overlays by default.
+- Chrome built-in AI translation through the experimental Translator API when available.
+- Draggable fullscreen-compatible overlay with per-row text size/color and background opacity controls.
+- Native Netflix subtitles are visually hidden while the translated overlay is active, but they must remain enabled as the source text.
 
-### :arrow_down: <a href="https://chrome.google.com/webstore/detail/two-captions-for-youtube/lpeonmjfimoijceaalocpgjjchocbiap/related">Download on Chrome Web Store</a>
-### :closed_book: <a href="https://github.com/mikesteele/dual-captions/releases">View latest release notes</a>
+## Install Locally
 
-<img src="https://raw.githubusercontent.com/mikesteele/dual-captions-gifs/master/screenshot-final.png" width="100%" />
+1. Open `chrome://extensions`.
+2. Enable Developer Mode.
+3. Click `Load unpacked`.
+4. Select the `extension/` directory from this repository.
+5. Open Disney+ or Netflix and start a video.
 
-***
+More detailed usage and Chrome AI setup notes are in [`extension/README.md`](extension/README.md).
 
-### How does it work?
+## Screenshots
 
-#### Site integrations
+### Netflix Working Well
 
-This extension works by intercepting caption file requests, parsing them, and rendering them onto the page. 
+![Netflix working well](extension/screenshots/netflix%20working%20well.png)
 
-The extension runs an adapter on the host site repeatedly to get up-to-date information about the state of the host. Adapters are functions that use DOM queries. You can find them in `site_integrations`.
+### Netflix English Subtitle Selection
 
-This extension does **not** use any internal APIs on the host site (eg. `window.netflix.appContext`) and it does not change any of the host sites own code. (eg. manipulating the host site's video player bundle)
+![Netflix choosing English subtitle so it works](extension/screenshots/netflix%20choosing%20eng%20sub%20so%20it%20works.png)
 
-Why not?
+### Disney+ Working Well
 
-* It is fragile to inject code into the host site bundle.
-* It is fragile to rely on internal APIs that may change.
-* Adapters that only rely on DOM selectors allow us to fix host site changes quickly.
-* Tiny adapters allow for many websites to be supported.
+![Disney+ working well](extension/screenshots/disney%20working%20well.png)
 
-The adapter API is still a work in progress and will be documented in the future. 
+### Disney+ Manual Sync
 
-This "hands off" approach has UX trade-offs, like requiring the user select a language on the host site to have the caption file requested. I believe long-term stability is more important than UX.
+![Disney+ sync](extension/screenshots/disney%20sync.png)
 
-#### Saving settings across sessions
+## Current Limitations
 
-Since `browser_action`s cannot persist any data after they are closed, this extension uses Redux middleware to store the user's settings with `chrome.storage` on any change. When the popup is re-opened, the store is re-hydrated with the user's saved store settings, and settings are injected into the `content_script`.
+- Netflix subtitles must remain enabled in Netflix's own subtitle menu, preferably English.
+- Netflix network subtitle parsing is not implemented yet.
+- Netflix image-based subtitle layers are not readable by this MVP.
+- Chrome built-in AI translation depends on experimental browser APIs and local model availability.
+- The old root-level build system and legacy directories are from the original project and are not the active extension path for this fork.
 
-### Manual Installation
+## Project Layout
 
-Building the extension locally requires having Node and Yarn installed. See https://nodejs.org/ and https://yarnpkg.com/ for installation steps.
+- `extension/`: active MV3 extension.
+- `extension/src/content.js`: overlay, settings, source detection, sync, translation coordination.
+- `extension/src/background.js`: Disney+ request capture and caption segment fetching.
+- `extension/src/page-translation-bridge.js`: main-world bridge to Chrome built-in AI APIs.
+- `extension/src/disneyplus/`: WebVTT parsing and caption store.
+- `extension/screenshots/`: README screenshots.
 
-1. Build the extension
+## Attribution
 
-````
-chmod u+x ./build-extension.sh
-./build-extension.sh
-````
+This repository is a fork of the original `dual-captions` project by Mike Steele. The original project was archived upstream in 2022; this fork currently focuses on a separate MV3 extension workflow for Disney+ and Netflix.
 
-2. Load the /build/ directory as an unpacked extension in chrome://extensions
-
-You'll need to enable Developer Mode in chrome://extensions to do this. See https://developer.chrome.com/extensions/getstarted#unpacked for more information.
-
-### Run Tests
-
-```
-cd browser_action
-yarn test
-
-cd content_script
-yarn test
-
-cd site_integrations
-yarn test
-```
-
-### Thanks
-
-* tamama9527 (https://github.com/tamama9527) for Traditional Chinese translations for the UI
-
-### License
+## License
 
 MIT
