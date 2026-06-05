@@ -50,15 +50,17 @@ The AI translation mode uses Chrome's experimental built-in AI APIs when availab
 
 To use local AI translation, each user must enable Chrome's experimental AI flags first:
 
+![Chrome Prompt API flags enabled](screenshots/chrome%20prompt%20api%20enable.png)
+
 1. Open `chrome://flags`.
-2. Search for `Prompt API for Gemini Nano` and set it to `Enabled`.
-3. Search for `Translator API` and set it to `Enabled` if it appears in your Chrome build.
-4. Search for `Language Detection API` and set it to `Enabled` if it appears.
-5. Enable multilingual support if Chrome exposes a separate multilingual AI flag.
+2. Search for `Prompt API for Gemini Nano` and set it to `Enabled Multilingual`.
+3. Search for `Prompt API for Gemini Nano with Multimodal Input` and set it to `Enabled`.
+4. If you see `Translation API streaming split by sentence`, leave it as `Default`; it is related but not the required switch.
+5. Search for `Language Detection API` and set it to `Enabled` if it appears.
 6. Relaunch Chrome.
 7. Open `chrome://components` and check whether any Gemini Nano / optimization guide model component can be updated or downloaded.
 8. Reload the unpacked extension in `chrome://extensions`.
-9. Hard-refresh Disney+.
+9. Hard-refresh Disney+ or Netflix.
 
 The panel should show:
 

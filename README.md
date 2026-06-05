@@ -1,53 +1,82 @@
 # Dual Captions for Streaming
 
-This fork is a new no-build Manifest V3 Chrome extension for dual translated captions on Disney+ and Netflix.
+Language: English | [Español](README.es.md) | [Português](README.pt-BR.md) | [Deutsch](README.de.md)
 
-It is not the original archived YouTube/Netflix/Disney+/Kanopy extension workflow. The actively developed extension lives in `extension/` and is loaded directly as an unpacked Chrome extension.
+This fork is a no-build Manifest V3 Chrome extension for dual translated captions on Disney+ and Netflix.
 
-## What Works
+The active extension is in `extension/`. Load that folder directly in Chrome. This fork does not use the original archived build workflow from the upstream project.
 
-- Disney+ WebVTT subtitle capture from network requests.
-- Disney+ manual subtitle sync for ad-supported playback timelines.
-- Netflix translation from the visible native subtitle text.
-- German and Brazilian Portuguese translated overlays by default.
-- Chrome built-in AI translation through the experimental Translator API when available.
-- Draggable fullscreen-compatible overlay with per-row text size/color and background opacity controls.
-- Native Netflix subtitles are visually hidden while the translated overlay is active, but they must remain enabled as the source text.
+## What It Does
 
-## Install Locally
+- Shows two translated caption lines at the same time.
+- Defaults to German and Brazilian Portuguese output.
+- Uses Chrome built-in AI translation when the experimental Translator API is available.
+- Supports Disney+ by capturing WebVTT subtitle segments from network requests.
+- Supports Netflix by reading the visible native Netflix subtitle text.
+- Hides Netflix's native subtitle layer while keeping it enabled as the source text.
+- Keeps the translated overlay visible in fullscreen.
+- Lets you drag the overlay and adjust text size, text color, background color, and opacity.
 
-1. Open `chrome://extensions`.
-2. Enable Developer Mode.
+## Install
+
+1. Open `chrome://extensions` in Chrome.
+2. Enable `Developer mode`.
 3. Click `Load unpacked`.
-4. Select the `extension/` directory from this repository.
+4. Select the `extension/` folder from this repository.
 5. Open Disney+ or Netflix and start a video.
 
-More detailed usage and Chrome AI setup notes are in [`extension/README.md`](extension/README.md).
+More detailed Chrome AI setup notes are in [`extension/README.md`](extension/README.md).
 
-## Screenshots
+## Enable Chrome AI Translation
 
-### Netflix Working Well
+![Chrome Prompt API flags enabled](extension/screenshots/chrome%20prompt%20api%20enable.png)
 
-![Netflix working well](extension/screenshots/netflix%20working%20well.png)
+1. Open `chrome://flags`.
+2. Set `Prompt API for Gemini Nano` to `Enabled Multilingual`.
+3. Set `Prompt API for Gemini Nano with Multimodal Input` to `Enabled`.
+4. If you see `Translation API streaming split by sentence`, leave it as `Default`; it is related but not the required switch.
+5. Relaunch Chrome, reload the unpacked extension, and refresh Disney+ or Netflix.
 
-### Netflix English Subtitle Selection
+## Netflix Guide
 
-![Netflix choosing English subtitle so it works](extension/screenshots/netflix%20choosing%20eng%20sub%20so%20it%20works.png)
+1. Start a Netflix video.
+2. Open Netflix's subtitle menu.
+3. Select `English` subtitles. Do not select `None`.
+4. The extension reads that English text, hides Netflix's native subtitle layer, and shows the translated overlay.
 
-### Disney+ Working Well
+### Step 1: Select English Subtitles On Netflix
 
-![Disney+ working well](extension/screenshots/disney%20working%20well.png)
+![Select English subtitles on Netflix](extension/screenshots/netflix%20choosing%20eng%20sub%20so%20it%20works.png)
 
-### Disney+ Manual Sync
+### Step 2: Use The Translated Overlay
 
-![Disney+ sync](extension/screenshots/disney%20sync.png)
+![Netflix translated overlay working](extension/screenshots/netflix%20working%20well.png)
+
+## Disney+ Guide
+
+1. Start a Disney+ video.
+2. Enable source subtitles, preferably English.
+3. If the captions are out of sync because of an ad-supported timeline, type the visible show time into the sync field.
+4. Click `Sync`.
+
+### Disney+ Overlay Working
+
+![Disney+ translated overlay working](extension/screenshots/disney%20working%20well.png)
+
+### If Disney+ Captions Are Out Of Sync
+
+![Disney+ captions out of sync](extension/screenshots/disney%20out%20of%20sync.png)
+
+### After Manual Sync
+
+![Disney+ manual sync fixed](extension/screenshots/disney%20sync.png)
 
 ## Current Limitations
 
-- Netflix subtitles must remain enabled in Netflix's own subtitle menu, preferably English.
-- Netflix network subtitle parsing is not implemented yet.
+- Netflix native subtitles must remain enabled because Netflix network subtitle parsing is not implemented yet.
 - Netflix image-based subtitle layers are not readable by this MVP.
 - Chrome built-in AI translation depends on experimental browser APIs and local model availability.
+- Disney+ may change subtitle hosts or formats, which can require parser updates.
 - The old root-level build system and legacy directories are from the original project and are not the active extension path for this fork.
 
 ## Project Layout
