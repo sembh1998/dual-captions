@@ -22,6 +22,28 @@ For Netflix, keep Netflix's own subtitle menu set to English. The extension read
 
 The overlay is moved into the active fullscreen player element, so translated captions should remain visible in fullscreen mode.
 
+## Screenshots
+
+### Netflix Working Well
+
+![Netflix working well](screenshots/netflix%20working%20well.png)
+
+### Netflix English Subtitle Selection
+
+![Netflix choosing English subtitle so it works](screenshots/netflix%20choosing%20eng%20sub%20so%20it%20works.png)
+
+### Disney+ Working Well
+
+![Disney+ working well](screenshots/disney%20working%20well.png)
+
+### Disney+ Out Of Sync
+
+![Disney+ out of sync](screenshots/disney%20out%20of%20sync.png)
+
+### Disney+ Manual Sync
+
+![Disney+ sync](screenshots/disney%20sync.png)
+
 ## Chrome Built-In AI Translation
 
 The AI translation mode uses Chrome's experimental built-in AI APIs when available.
