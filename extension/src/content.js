@@ -1,5 +1,5 @@
 (function () {
-  const EXTENSION_VERSION = '0.1.31';
+  const EXTENSION_VERSION = '0.1.32';
   const SETTINGS_KEY = 'dcDisneySettings';
   const DEFAULT_SETTINGS = {
     enabled: true,
@@ -143,6 +143,15 @@
     </div>
   `;
   document.documentElement.appendChild(root);
+
+  const ensureRootParent = () => {
+    const fullscreenElement = document.fullscreenElement;
+    const targetParent = fullscreenElement && fullscreenElement !== root && !root.contains(fullscreenElement)
+      ? fullscreenElement
+      : document.documentElement;
+
+    if (root.parentElement !== targetParent) targetParent.appendChild(root);
+  };
 
   const captionEl = root.querySelector('#dc-disney-caption');
   const firstCaptionEl = root.querySelector('#dc-disney-caption-first');
@@ -793,6 +802,8 @@
   const renderCaption = () => {
     if (!isActive) return;
 
+    ensureRootParent();
+
     const playbackActive = isPlaybackActive();
 
     if (!playbackActive) {
@@ -1032,6 +1043,11 @@
   captionEl.addEventListener('pointerup', stopDraggingCaption);
   captionEl.addEventListener('pointercancel', stopDraggingCaption);
   captionEl.addEventListener('lostpointercapture', stopDraggingCaption);
+
+  document.addEventListener('fullscreenchange', () => {
+    ensureRootParent();
+    applyCollapsedState();
+  });
 
   safeChromeCall(() => {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

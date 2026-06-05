@@ -18,6 +18,10 @@ Minimal Manifest V3 dual-caption MVP for Disney+ and Netflix.
 5. Choose the first and second output languages. Defaults are `Deutsch` and `Português (Brasil)`.
 6. Keep AI translate enabled to translate the source caption into both output languages.
 
+For Netflix, keep Netflix's own subtitle menu set to English. The extension reads Netflix's visible native subtitle text and then visually hides Netflix's native subtitle layer while the translated overlay is active. If Netflix subtitles are set to `None`, the extension currently has no source text to translate.
+
+The overlay is moved into the active fullscreen player element, so translated captions should remain visible in fullscreen mode.
+
 ## Chrome Built-In AI Translation
 
 The AI translation mode uses Chrome's experimental built-in AI APIs when available.
@@ -55,7 +59,7 @@ If the dedicated Translator API is available, it is used. If only Prompt API is 
 
 - Disney+ and Netflix MVP.
 - Captures WebVTT subtitle segments from Disney CDN hosts.
-- Uses visible/native subtitle text for Netflix translation.
+- Uses visible/native subtitle text for Netflix translation and hides Netflix's native text layer while the overlay is active.
 - Netflix image-based subtitle layers are not readable by this MVP; use a text/native subtitle track when available.
 - Parses, dedupes, sorts, and renders captions in an overlay.
 - Can translate the active captured caption with Chrome's experimental built-in AI APIs.
@@ -67,4 +71,5 @@ If the dedicated Translator API is available, it is used. If only Prompt API is 
 - If the background service worker cannot refetch segment URLs, request capture will need a different strategy.
 - AI translation depends on experimental Chrome APIs and may not be available in all Chrome builds.
 - Prompt API translation can be slower or less consistent than the dedicated Translator API.
-- The panel is intentionally simple and will be replaced after the Disney+ capture/render pipeline is proven.
+- Netflix translation requires Netflix native subtitles to remain enabled because network subtitle parsing is not implemented yet.
+- The panel is intentionally simple and may be replaced after the capture/render pipeline is proven.
