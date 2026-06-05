@@ -1,5 +1,5 @@
 (function () {
-  const EXTENSION_VERSION = '0.1.21';
+  const EXTENSION_VERSION = '0.1.24';
   const SETTINGS_KEY = 'dcDisneySettings';
   const DEFAULT_SETTINGS = {
     enabled: true,
@@ -15,7 +15,8 @@
     backgroundOpacity: 0.72,
     positionLeft: 50,
     positionBottom: 14,
-    syncOffsetSeconds: 0
+    syncOffsetSeconds: 0,
+    settingsCollapsed: false
   };
 
   const store = new window.DCCaptionStore();
@@ -34,6 +35,7 @@
   let lastRenderStatusAt = 0;
   let translationRequestId = 0;
   let translationBridgeReady = false;
+  let wasInPlayback = false;
   let isDraggingCaption = false;
   let dragOffsetX = 0;
   let dragOffsetY = 0;
@@ -84,7 +86,12 @@
       <div id="dc-disney-caption-first"></div>
       <div id="dc-disney-caption-second"></div>
     </div>
+    <button id="dc-disney-bubble" type="button" title="Open dual captions settings" hidden>DC</button>
     <div id="dc-disney-panel">
+      <div class="dc-disney-panel-header">
+        <strong>Dual Captions</strong>
+        <button id="dc-disney-settings-toggle" type="button">Collapse</button>
+      </div>
       <label><input id="dc-disney-enabled" type="checkbox"> Dual captions</label>
       <label>Source <select id="dc-disney-language" aria-label="Source caption language"></select></label>
       <label><input id="dc-disney-translate" type="checkbox"> AI translate</label>
@@ -102,20 +109,22 @@
           <option value="en">English</option>
         </select>
       </label>
-      <div class="dc-disney-style-grid">
-        <span>1st size</span><input id="dc-disney-first-size" type="number" min="0.5" max="2.5" step="0.05">
-        <span>1st text</span><input id="dc-disney-first-color" type="color">
-        <span>2nd size</span><input id="dc-disney-second-size" type="number" min="0.5" max="2.5" step="0.05">
-        <span>2nd text</span><input id="dc-disney-second-color" type="color">
-        <span>Bg</span><input id="dc-disney-bg-color" type="color">
-        <span>Bg opacity</span><input id="dc-disney-bg-opacity" type="number" min="0" max="1" step="0.05">
+      <div id="dc-disney-settings-advanced">
+        <div class="dc-disney-style-grid">
+          <span>1st size</span><input id="dc-disney-first-size" type="number" min="0.5" max="2.5" step="0.05">
+          <span>1st text</span><input id="dc-disney-first-color" type="color">
+          <span>2nd size</span><input id="dc-disney-second-size" type="number" min="0.5" max="2.5" step="0.05">
+          <span>2nd text</span><input id="dc-disney-second-color" type="color">
+          <span>Bg</span><input id="dc-disney-bg-color" type="color">
+          <span>Bg opacity</span><input id="dc-disney-bg-opacity" type="number" min="0" max="1" step="0.05">
+        </div>
+        <div class="dc-disney-sync-row">
+          <input id="dc-disney-sync-time" type="text" placeholder="Show time 1:24:18">
+          <button id="dc-disney-sync-button" type="button">Sync</button>
+        </div>
+        <div id="dc-disney-bridge-status">Bridge: checking...</div>
+        <div id="dc-disney-source-status">Source: waiting...</div>
       </div>
-      <div class="dc-disney-sync-row">
-        <input id="dc-disney-sync-time" type="text" placeholder="Show time 1:24:18">
-        <button id="dc-disney-sync-button" type="button">Sync</button>
-      </div>
-      <div id="dc-disney-bridge-status">Bridge: checking...</div>
-      <div id="dc-disney-source-status">Source: waiting...</div>
       <div id="dc-disney-status">Waiting for Disney+ captions...</div>
       <div id="dc-disney-version">v${EXTENSION_VERSION}</div>
     </div>
@@ -125,7 +134,10 @@
   const captionEl = root.querySelector('#dc-disney-caption');
   const firstCaptionEl = root.querySelector('#dc-disney-caption-first');
   const secondCaptionEl = root.querySelector('#dc-disney-caption-second');
+  const bubbleEl = root.querySelector('#dc-disney-bubble');
   const panelEl = root.querySelector('#dc-disney-panel');
+  const settingsToggle = root.querySelector('#dc-disney-settings-toggle');
+  const advancedSettingsEl = root.querySelector('#dc-disney-settings-advanced');
   const enabledInput = root.querySelector('#dc-disney-enabled');
   const languageSelect = root.querySelector('#dc-disney-language');
   const translateInput = root.querySelector('#dc-disney-translate');
@@ -192,6 +204,13 @@
     firstCaptionEl.style.fontSize = `${settings.firstSize}em`;
     secondCaptionEl.style.color = settings.secondColor;
     secondCaptionEl.style.fontSize = `${settings.secondSize}em`;
+  };
+
+  const applyCollapsedState = () => {
+    panelEl.hidden = settings.settingsCollapsed || !wasInPlayback || !!document.fullscreenElement;
+    bubbleEl.hidden = !settings.settingsCollapsed || !wasInPlayback || !!document.fullscreenElement;
+    advancedSettingsEl.hidden = false;
+    settingsToggle.textContent = 'Collapse';
   };
 
   const setStatus = text => {
@@ -376,6 +395,7 @@
     bgColorInput.value = settings.backgroundColor;
     bgOpacityInput.value = String(settings.backgroundOpacity);
     applyCaptionStyles();
+    applyCollapsedState();
     renderLanguageOptions();
   };
 
@@ -572,6 +592,19 @@
       || videos.find(video => video.textTracks && video.textTracks.length);
   };
 
+  const isPlaybackRoute = () => {
+    return /\/play\/|\/video\//.test(window.location.pathname);
+  };
+
+  const isPlaybackActive = () => {
+    const video = getVideo();
+    if (!video) return false;
+
+    const rect = video.getBoundingClientRect();
+    const isLargeVideo = rect.width >= window.innerWidth * 0.45 && rect.height >= window.innerHeight * 0.35;
+    return isPlaybackRoute() || isLargeVideo || !!(video.duration && video.duration > 60);
+  };
+
   const getVisibleNativeCaptionText = () => {
     const candidates = Array.from(document.querySelectorAll('div, span, p'));
     const viewportHeight = window.innerHeight;
@@ -674,6 +707,23 @@
   const renderCaption = () => {
     if (!isActive) return;
 
+    const playbackActive = isPlaybackActive();
+    if (!playbackActive) {
+      wasInPlayback = false;
+      panelEl.hidden = true;
+      bubbleEl.hidden = true;
+      captionEl.hidden = true;
+      animationFrameId = window.requestAnimationFrame(renderCaption);
+      return;
+    }
+
+    if (!wasInPlayback) {
+      wasInPlayback = true;
+      setStatus('Disney+ playback detected. Waiting for captions...');
+      requestPendingSegments();
+      harvestTextTracks();
+    }
+
     const video = getVideo();
     const shouldRender = settings.enabled && settings.selectedLanguage && video;
     const visibleNativeText = shouldRender ? cleanSubtitleForTranslation(getVisibleNativeCaptionText()) : '';
@@ -704,7 +754,7 @@
     firstCaptionEl.textContent = firstText;
     secondCaptionEl.textContent = secondText;
     captionEl.hidden = !firstText && !secondText;
-    panelEl.hidden = !!document.fullscreenElement;
+    applyCollapsedState();
 
     if (!sourceText && shouldRender && Date.now() - lastRenderStatusAt > 5000) {
       lastRenderStatusAt = Date.now();
@@ -719,13 +769,14 @@
     lastUrl = window.location.href;
     store.clear();
     harvestedTextTrackKeys.clear();
+    wasInPlayback = false;
     settings.selectedLanguage = '';
     saveSettings();
     renderLanguageOptions();
     firstCaptionEl.textContent = '';
     secondCaptionEl.textContent = '';
     setStatus('Waiting for Disney+ captions...');
-    requestPendingSegments();
+    if (isPlaybackActive()) requestPendingSegments();
   };
 
   enabledInput.addEventListener('change', () => {
@@ -763,6 +814,18 @@
     translatedCaptionState.key = '';
     translatedCaptionState.text = '';
     pendingTranslations.clear();
+    saveSettings();
+  });
+
+  settingsToggle.addEventListener('click', () => {
+    settings.settingsCollapsed = true;
+    applyCollapsedState();
+    saveSettings();
+  });
+
+  bubbleEl.addEventListener('click', () => {
+    settings.settingsCollapsed = false;
+    applyCollapsedState();
     saveSettings();
   });
 

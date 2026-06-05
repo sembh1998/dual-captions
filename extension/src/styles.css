@@ -3,6 +3,10 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
+#dc-disney-root [hidden] {
+  display: none !important;
+}
+
 #dc-disney-caption {
   position: fixed;
   left: 50%;
@@ -60,6 +64,45 @@
   box-shadow: 0 16px 44px rgba(0, 0, 0, 0.35);
   color: #fff;
   font-size: 13px;
+}
+
+.dc-disney-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#dc-disney-bubble {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483647;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(9, 14, 28, 0.88);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.38);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.dc-disney-panel-header strong {
+  font-size: 13px;
+}
+
+.dc-disney-panel-header button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
 }
 
 #dc-disney-panel label {
@@ -167,6 +210,11 @@
     right: 10px;
     bottom: 10px;
     width: 200px;
+  }
+
+  #dc-disney-bubble {
+    right: 10px;
+    bottom: 10px;
   }
 
   #dc-disney-caption {
